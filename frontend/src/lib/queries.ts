@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { mock, syncLiveAgents, syncLiveCompanies, syncLiveTickets, syncLiveRuns } from "./mock";
 import { api } from "./api";
-import type { Agent, Ticket, ActivityEvent, TicketStatus } from "./types";
+import type { Agent, Ticket, ActivityEvent, TicketStatus, CreateTicketInput } from "./types";
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false"; // default true → standalone
 
@@ -44,6 +44,14 @@ export function useSkills() {
 
 export function useWorkflows() {
   return useQuery({ queryKey: ["workflows"], queryFn: () => (USE_MOCK ? mock.getWorkflows() : api.getWorkflows()) });
+}
+
+export function useWorkflow(id: number | null) {
+  return useQuery({
+    queryKey: ["workflow", id],
+    queryFn: () => (USE_MOCK ? mock.getWorkflowWithPhases(id as number) : api.getWorkflowWithPhases(id as number)),
+    enabled: id != null,
+  });
 }
 
 export function useContextDocs() {
@@ -120,6 +128,14 @@ export function useActivitySeed() {
 }
 
 // ---- mutations -------------------------------------------------------------
+export function useCreateTicket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateTicketInput) => (USE_MOCK ? mock.createTicket(input) : api.createTicket(input)),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["tickets"] }); },
+  });
+}
+
 export function useUpsertAgent() {
   const qc = useQueryClient();
   return useMutation({

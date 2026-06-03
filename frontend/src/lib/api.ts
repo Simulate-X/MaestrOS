@@ -3,7 +3,7 @@
    Returns the same shapes as mock.ts so queries.ts can switch transparently. */
 import axios from "axios";
 import type {
-  Company, Skill, Agent, Workflow, WorkflowWithPhases, ContextDocument, Ticket, Run, AuditEvent,
+  Company, Skill, Agent, Workflow, WorkflowWithPhases, ContextDocument, Ticket, Run, AuditEvent, CreateTicketInput,
 } from "./types";
 
 const client = axios.create({
@@ -32,6 +32,8 @@ export const api = {
     data<AuditEvent[]>(client.get("/audit", { params })),
 
   // mutations
+  createTicket: (input: CreateTicketInput) =>
+    data<Ticket>(client.post("/tickets", { ...input, status: "queued" })),
   upsertAgent: (agent: Partial<Agent> & { id?: number }) =>
     agent.id ? data<Agent>(client.patch(`/agents/${agent.id}`, agent)) : data<Agent>(client.post("/agents", agent)),
   approveTicket: (id: number) => data<void>(client.post(`/tickets/${id}/approve`)),

@@ -8,6 +8,7 @@ import { relTime, agentLabel, truncate } from "../lib/helpers";
 import type { CompanyId } from "../lib/types";
 import StatusBadge from "../components/StatusBadge";
 import { FilterChip } from "../components/atoms";
+import NewTicketModal from "../components/NewTicketModal";
 
 const ORDER: Record<string, number> = { blocked: 0, needs_approval: 1, error: 2, running: 3, queued: 4, done: 5 };
 
@@ -15,6 +16,7 @@ export default function Tickets({ companyId, onOpenTicket }: { companyId: Compan
   const { t } = useTranslation();
   const now = useNow();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [newOpen, setNewOpen] = useState(false);
   const { data: tickets = [] } = useTickets(companyId);
 
   const list = useMemo(() => tickets
@@ -36,6 +38,10 @@ export default function Tickets({ companyId, onOpenTicket }: { companyId: Compan
               color={s === "all" ? "#00ff88" : statusMeta(s).color} onClick={() => setStatusFilter(s)} />
           ))}
         </div>
+        <button onClick={() => setNewOpen(true)} className="font-mono" style={{
+          padding: "7px 15px", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer",
+          color: "#0a0d0c", background: "#00ff88", border: "none", boxShadow: "0 0 16px -6px #00ff88", whiteSpace: "nowrap",
+        }}>+ {t("newTicket.button")}</button>
       </div>
       <div className="mos-scroll" style={{ flex: 1, overflowY: "auto", minHeight: 0, padding: "14px 16px" }}>
         {list.length === 0 ? (
@@ -71,6 +77,10 @@ export default function Tickets({ companyId, onOpenTicket }: { companyId: Compan
           </div>
         )}
       </div>
+
+      {newOpen && (
+        <NewTicketModal companyId={companyId} onClose={() => setNewOpen(false)} onCreated={(id) => onOpenTicket(id)} />
+      )}
     </div>
   );
 }

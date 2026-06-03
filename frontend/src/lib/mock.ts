@@ -3,7 +3,7 @@
    queries.ts reads this when VITE_USE_MOCK === "true"; in live mode the same
    shapes come from api.ts instead, so components never change. */
 import type {
-  Company, Skill, Agent, Workflow, Phase, ContextDocument, Ticket, Run, AuditEvent, ActivityEvent,
+  Company, Skill, Agent, Workflow, Phase, ContextDocument, Ticket, Run, AuditEvent, ActivityEvent, CreateTicketInput,
 } from "./types";
 
 // ---- Companies ------------------------------------------------------------
@@ -302,6 +302,30 @@ const companies = [
       const t = ticketsById[id];
       if (t) t.status = status;
       return ok(t);
+    },
+    nextTicketId: (() => { let n = 90000; return () => ++n; })(),
+    createTicket: (input: CreateTicketInput) => {
+      const ticket: Ticket = {
+        id: mock.nextTicketId(),
+        company_id: input.company_id,
+        workflow_id: input.workflow_id ?? null,
+        current_phase_id: input.current_phase_id ?? null,
+        parent_ticket_id: null,
+        assignee_agent_id: input.assignee_agent_id,
+        title: input.title,
+        body: input.body,
+        status: "queued",
+        priority: input.priority,
+        owner_agent_id: null,
+        locked_at: null,
+        blocked_reason: null,
+        context_doc_ids: input.context_doc_ids ?? [],
+        phase_visit_count: {},
+        created_at: new Date().toISOString(),
+      };
+      store.tickets.unshift(ticket);
+      ticketsById[ticket.id] = ticket;
+      return ok(ticket);
     },
   };
 

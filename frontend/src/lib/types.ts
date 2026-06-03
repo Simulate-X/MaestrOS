@@ -140,3 +140,14 @@ export interface CompanyScope {
 
 /** Selected company scope — shared by every view. */
 export type CompanyId = number | "all";
+
+export interface CreateTicketInput {
+  company_id: number;
+  assignee_agent_id: number;
+  title: string;
+  body: string;
+  priority: number;
+  workflow_id?: number | null;
+  current_phase_id?: number | null;
+  context_doc_ids?: number[];
+}
