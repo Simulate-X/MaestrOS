@@ -1,6 +1,6 @@
-# ğŸ¼ MaestrOS
+# 🎼 MaestrOS
 
-> A local "software company" of role-playing AI agents â€” work flows through workflow phases, and every agent has its own model, budget, and human approval gate.
+> Rolleri olan AI ajanlarından oluşan lokal bir "yazılım şirketi" — iş, workflow fazlarında akar; her ajanın kendi modeli, bütçesi ve insan onay kapısı vardır.
 
 ![Live Ops](docs/screenshots/live_ops.png)
 
@@ -10,118 +10,121 @@
 
 ---
 
-## What is MaestrOS?
+## MaestrOS Nedir?
 
-MaestrOS is a **control plane** for running a virtual company of AI agents. Each agent has a role (CEO, Planner, Engineer, QAâ€¦), is defined by a Markdown **skill** file, and stays in character â€” ask the Planner to write code and it will hand you a spec, nothing else. Work flows **ticket-by-ticket** through a `plan â†’ build â†’ review â†’ ship` chain; if QA asks for rework it loops back to build, and the CEO gives the final approval. Budgets, approval gates, and an immutable audit log keep the whole thing governable.
-
-Everything can run locally: mix **Ollama, Anthropic, and OpenRouter** within a single workflow. I started turning this into a personal AI platform â€” adding separate AI companies for different domains of my work, like YouTube automation and a visual-production studio.
+MaestrOS, yapay zeka ajanlarından oluşan sanal bir şirketi yönetmek için geliştirilmiş bir **kontrol düzlemi**. Her ajan bir rol taşır (CEO, Planner, Engineer, QA…), bir Markdown skill dosyasıyla tanımlanır ve rolünden çıkmaz — Planner'dan kod yazmasını istersen spec yazar, başka bir şey yapmaz. İş, ticket-by-ticket olarak `plan → build → review → ship` zincirinde akar; QA rework isterse build'e döner, CEO nihayet onaylar. Her şey lokal çalışabilir: Ollama, Anthropic ve OpenRouter'ı aynı workflow içinde karıştırabilirsin. Bunu kişisel bir AI platform'a dönüştürmek için başlattım — YouTube otomasyonu, görsel üretim stüdyosu gibi farklı iş alanları için ayrı AI şirketleri ekleyeceğim.
 
 ---
 
-## ğŸ›ï¸ Architecture â€” Three Layers
+## ✨ Concept
 
-MaestrOS is a hybrid of three ideas, each forming one layer:
+MaestrOS bir **otonom yazılım şirketi** modeller: Planner, Engineer, QA, CEO gibi uzmanlaşmış AI ajanlardan oluşan bir ekip, ticket alır, tanımlı bir **workflow** içinde çalışır ve birbirine el sunar; hassas adımlarda insan onay kapısı devreye girer.
 
-| Layer | Role | Inspired by |
-|-------|------|-------------|
-| **1 Â· Control Plane** | Per-agent model/config/budget/role, atomic ticket checkout (`SKIP LOCKED`), heartbeat scheduler, governance gates, immutable audit log | Paperclip |
-| **2 Â· Behavior Engine** | Markdown **skills** as system prompts; a sprint methodology (`Think â†’ Plan â†’ Build â†’ Review â†’ Test â†’ Ship â†’ Reflect`) | gstack |
-| **3 Â· Hierarchical Workflow** | YAML phase chain, verdict-aware branching, org chart (`reporting_to`), visual canvas | ChatDev |
+Her ajan, bir **skill** (Markdown sistem prompt'u) ile tanımlanan bir **karakterdir** ve rolünde kalır: Planner'dan kod yazmasını iste, reddeder ve spec yazar. İş, fazlar halinde akar (`plan → build → review → ship`); verdict-aware yönlendirme, rework döngüleri, ajan ve şirket başına bütçe, değiştirilemez audit kaydı dahildir.
 
 ---
 
-## âœ¨ Features
+## 🏛️ Mimari — Üç Katman
 
-- **Per-agent provider & model** â€” mix providers within one workflow (Ollama Â· Anthropic Â· OpenRouter)
-- **Budgets with auto-pause** â€” per-agent *and* per-company caps, period-aware (daily / monthly / all-time); an over-budget agent pauses automatically, and the scheduler skips an over-budget company
-- **Atomic ticket claim** â€” `SKIP LOCKED` so no two agents grab the same ticket
-- **Verdict-aware workflows** â€” phases route on the reviewer's verdict (`approve / rework / escalate / ship / hold`), with backward branching and rework-loop limits
-- **Human-in-the-loop** â€” `human_approval` gates; an Approval Inbox with full context (parent chain, prior verdict, budget impact)
-- **Immutable audit log** â€” every operator / agent / system action, recorded append-only
-- **Operations dashboard** â€” six views: Live Ops, Roster, Workflow Canvas, Tickets, Inbox, Audit
-- **Bilingual UI** â€” Turkish / English (chrome localized; technical identifiers stay English)
+MaestrOS, üç fikrin birleşiminden oluşur:
 
----
-
-## ğŸ› ï¸ Tech Stack
-
-**Backend** â€” Python 3.12 Â· FastAPI Â· PostgreSQL Â· SQLAlchemy 2.0 (async) Â· Alembic Â· Pydantic
-**Frontend** â€” React 18 Â· Vite Â· TypeScript Â· Tailwind CSS Â· TanStack Query Â· React Flow Â· Recharts Â· i18next
-**Infra** â€” Docker Â· Docker Compose Â· Ollama (local models)
+| Katman | Rol | İlham kaynağı |
+|--------|-----|---------------|
+| **1 · Control Plane** | Ajan başına model/config/bütçe/rol, atomik ticket checkout (`SKIP LOCKED`), heartbeat scheduler, governance kapıları, immutable audit log | Paperclip |
+| **2 · Behavior Engine** | Markdown **skill**'ler sistem prompt'u olarak; sprint metodolojisi (`Think → Plan → Build → Review → Test → Ship → Reflect`) | gstack |
+| **3 · Hiyerarşik Workflow** | YAML faz zinciri, verdict-aware dallanma, org chart (`reporting_to`), görsel canvas | ChatDev |
 
 ---
 
-## âš¡ Getting Started
+## ✨ Özellikler
 
-### Prerequisites
+- **Ajan başına provider & model** — aynı workflow içinde provider karıştır (Ollama · Anthropic · OpenRouter)
+- **Otomatik duraklatan bütçe sistemi** — ajan *ve* şirket bazında limitler, dönem-duyarlı (daily / monthly / all-time); bütçesi dolan ajan otomatik duraklar, scheduler bütçesi dolmuş şirketi atlar
+- **Atomik ticket claim** — `SKIP LOCKED` ile iki ajan aynı ticket'ı alamaz
+- **Verdict-aware workflow** — fazlar, reviewer'ın kararına göre yönlenir (`approve / rework / escalate / ship / hold`); geriye dallanma ve rework döngü limiti desteklenir
+- **Human-in-the-loop** — `human_approval` kapıları; tam bağlamla (parent zinciri, önceki verdict, bütçe etkisi) Approval Inbox
+- **Değiştirilemez audit log** — operator / ajan / sistem, her eylem append-only kaydedilir
+- **Operasyon dashboard'u** — altı view: Live Ops, Roster, Workflow Canvas, Tickets, Inbox, Audit
+- **İki dilli arayüz** — Türkçe / İngilizce (chrome lokalize; teknik tanımlayıcılar İngilizce kalır)
+
+---
+
+## 🛠️ Teknoloji Stack'i
+
+**Backend** — Python 3.12 · FastAPI · PostgreSQL · SQLAlchemy 2.0 (async) · Alembic · Pydantic  
+**Frontend** — React 18 · Vite · TypeScript · Tailwind CSS · TanStack Query · React Flow · Recharts · i18next  
+**Altyapı** — Docker · Docker Compose · Ollama (lokal modeller)
+
+---
+
+## ⚡ Başlarken
+
+### Gereksinimler
 - Docker & Docker Compose
-- (Optional) [Ollama](https://ollama.com) for local models
-- (Optional) Anthropic / OpenRouter API keys for cloud models
+- (Opsiyonel) [Ollama](https://ollama.com) — lokal modeller için
+- (Opsiyonel) Anthropic / OpenRouter API anahtarları — cloud modeller için
 
-### Run
+### Çalıştır
 
 ```bash
 git clone https://github.com/Simulate-X/MaestrOS.git
 cd MaestrOS
 
-# environment variables
-cp .env.example .env                     # DB + optional API keys
-cp frontend/.env.example frontend/.env   # frontend â†’ backend connection
+# Ortam değişkenleri
+cp .env.example .env                     # DB + opsiyonel API anahtarları
+cp frontend/.env.example frontend/.env  # frontend API bağlantısı
 
-docker compose up -d   # db Â· ollama Â· control-plane Â· scheduler Â· ui
+docker compose up -d   # db · ollama · control-plane · scheduler · ui
 ```
 
-- **Dashboard:** http://localhost:5173
+- **Dashboard:** http://localhost:5173  
 - **API docs (Swagger):** http://localhost:8080/docs
 
-To restart only the scheduler:
+Yalnızca scheduler'ı yeniden başlatmak için:
 ```bash
 docker compose restart scheduler
 ```
 
 ---
 
-## ğŸ“ Project Structure
+## 📁 Proje Yapısı
 
 ```
 MaestrOS/
-â”œâ”€â”€ control-plane/          # FastAPI backend
-â”‚   â”œâ”€â”€ app/                # models, adapters, services, api
-â”‚   â”œâ”€â”€ alembic/            # database migrations
-â”‚   â””â”€â”€ tests/              # 88 unit tests
-â”œâ”€â”€ frontend/               # Vite + React + TS operations dashboard
-â”œâ”€â”€ skills/                 # Markdown skills (agent system prompts)
-â”œâ”€â”€ workflows/              # YAML workflow definitions
-â”œâ”€â”€ .env.example
-â”œâ”€â”€ docker-compose.yml
-â””â”€â”€ PROGRESS.md
+├── control-plane/          # FastAPI backend
+│   ├── app/                # models, adapters, services, api
+│   ├── alembic/            # veritabanı migration'ları
+│   └── tests/              # 88 unit test
+├── frontend/               # Vite + React + TS operasyon dashboard'u
+├── skills/                 # Markdown skill'ler (ajan sistem prompt'ları)
+├── workflows/              # YAML workflow tanımları
+├── .env.example
+├── docker-compose.yml
+└── PROGRESS.md
 ```
 
 ---
 
-## ğŸ—ºï¸ Roadmap
+## 🗺️ Yol Haritası
 
-- [ ] **Multi-company structure** â€” a separate AI crew per work domain
-  - [ ] YouTube Automation: Trend Researcher â†’ Script Writer â†’ SEO Specialist â†’ Visual Director
-  - [ ] Visual Production Studio: Brief Analyst â†’ Prompt Engineer â†’ Quality Inspector
-- [ ] **Dynamic provider system** â€” fetch the Ollama model list live via `GET /api/ollama/models`; remove the hardcoded `MODEL_CATALOG`
-- [ ] **Plugin-based adapter system** â€” add a new provider without touching the core (the Paperclip approach)
-- [ ] `company_id` filter on `GET /agents` and `GET /tickets`
-- [ ] Real-time Live Ops feed (SSE or more frequent polling)
+- [ ] **Çoklu şirket yapısı** — her iş alanı için ayrı AI ekibi
+  - [ ] YouTube Otomasyonu: Trend Araştırmacı → Script Yazarı → SEO Uzmanı → Görsel Yönetmen
+  - [ ] Görsel Üretim Stüdyosu: Brief Analisti → Prompt Mühendisi → Kalite Denetçi
+- [ ] **Dinamik provider sistemi** — `GET /api/ollama/models` ile Ollama model listesi canlı çekilsin; hardcode `MODEL_CATALOG` kaldırılsın
+- [ ] **Plugin-bazlı adapter yapısı** — yeni provider eklemek için core'a dokunmak gerekmeden (Paperclip yaklaşımı)
+- [ ] `GET /agents` ve `GET /tickets`'a `company_id` filtresi
+- [ ] Live Ops feed'i gerçek zamanlı (SSE veya daha sık polling)
 - [ ] GitHub Actions CI/CD
 
 ---
 
-## ğŸ™ Acknowledgements
+## 🙏 Kaynaklar
 
-MaestrOS draws its three-layer design from three projects:
-
-- **[Paperclip](https://github.com/paperclipai/paperclip)** â€” open-source orchestration for autonomous AI-agent companies (the control-plane layer).
-- **[gstack](https://github.com/garrytan/gstack)** â€” a Markdown-skill workflow that turns a coding agent into a virtual engineering team, built around a `Think â†’ Plan â†’ Build â†’ Review â†’ Test â†’ Ship â†’ Reflect` sprint (the behavior layer).
-- **ChatDev** â€” multi-agent role hierarchy and phased software-company workflows (the workflow layer).
+MaestrOS'un üç katmanlı tasarımı üç projeden ilham aldı:  
+**Paperclip** (control plane), **gstack** (skill-bazlı davranış), **ChatDev** (rol hiyerarşisi ve fazlı workflow'lar).
 
 ---
 
-## ğŸ“„ License
+## 📄 Lisans
 
-This project is licensed under the MIT License â€” see [LICENSE](LICENSE) for details.
+Bu proje MIT Lisansı ile lisanslanmıştır — detaylar için [LICENSE](LICENSE) dosyasına bak.
