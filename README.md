@@ -1,4 +1,4 @@
-﻿# ğŸ¼ MaestrOS
+# ğŸ¼ MaestrOS
 
 > A local "software company" of role-playing AI agents â€” work flows through workflow phases, and every agent has its own model, budget, and human approval gate.
 
