@@ -2,6 +2,12 @@
 
 > Rolleri olan AI ajanlarından oluşan lokal bir "yazılım şirketi" — iş, workflow fazlarında akar; her ajanın kendi modeli, bütçesi ve insan onay kapısı vardır.
 
+![Live Ops](docs/screenshots/live_ops.png)
+
+| Roster | Tickets | Workflow Canvas |
+|--------|---------|-----------------|
+| ![Roster](docs/screenshots/roster.png) | ![Tickets](docs/screenshots/tickets.png) | ![Workflow Canvas](docs/screenshots/workflow_canvas.png) |
+
 ---
 
 ## MaestrOS Nedir?
