@@ -1,0 +1,73 @@
+# MaestrOS — default_company workflow v0.4
+# Faz 2.6: ship verdict simetrisi, default_verdict per-phase.
+
+name: default_company
+version: "0.4"
+description: |
+  4 fazlı minimum şirket: CEO planlar → Engineer yapar → QA denetler → CEO ship eder.
+  Üç gerçek rol, dört faz, iki insan onay kapısı (CEO çıkışları).
+
+roles:
+  - id: ceo
+    title: CEO
+    provider: ollama
+    model: qwen2.5-coder:14b
+    description: Hedef sahibi. Spec yazar, son onayı verir.
+    default_context_refs:
+      - api_schema
+
+  - id: eng
+    title: Engineer
+    provider: ollama
+    model: qwen2.5-coder:14b
+    description: Spec'i alır, çalışan çıktıyı üretir.
+    default_context_refs:
+      - api_schema
+
+  - id: qa
+    title: QA Lead
+    provider: ollama
+    model: qwen2.5-coder:7b-q4
+    description: Spec'e karşı çıktıyı denetler, verdict döner.
+    default_context_refs:
+      - api_schema
+
+phases:
+  - id: plan
+    role: ceo
+    skill: plan
+    gate: human_approval
+    next: build
+    max_reworks: 1
+    default_verdict: approve        # hold/escalate redirect'ten gelen approve = devam
+    branch_on_verdict: {}
+
+  - id: build
+    role: eng
+    skill: build
+    gate: auto
+    next: review
+    max_reworks: 2
+    default_verdict: approve        # Engineer verdict üretmiyor; bu alan çalışmaz
+    branch_on_verdict: {}
+
+  - id: review
+    role: qa
+    skill: review
+    gate: human_approval
+    next: ship
+    max_reworks: 1
+    default_verdict: approve        # approve → ship'e ilerle
+    branch_on_verdict:
+      rework: build                 # rework → Engineer'a geri
+      escalate: plan                # escalate → CEO'ya geri (spec revizyonu)
+
+  - id: ship
+    role: ceo
+    skill: ship
+    gate: human_approval
+    next: null                      # ship → workflow end
+    max_reworks: 1                  # max 1 hold döngüsü
+    default_verdict: ship           # ship → forward (null = workflow end)
+    branch_on_verdict:
+      hold: plan                    # hold → yeni plan turu başlar

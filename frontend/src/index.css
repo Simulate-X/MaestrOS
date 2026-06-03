@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: #0a0d0c;
+  color: #e6f1ec;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+#root { height: 100vh; }
+.font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+button { font-family: inherit; }
+
+/* scrollbars */
+.mos-scroll::-webkit-scrollbar, .mos-md pre::-webkit-scrollbar { width: 10px; height: 10px; }
+.mos-scroll::-webkit-scrollbar-track { background: #0a0d0c; }
+.mos-scroll::-webkit-scrollbar-thumb { background: #1a3a2a; border-radius: 6px; border: 2px solid #0a0d0c; }
+.mos-scroll::-webkit-scrollbar-thumb:hover { background: #2a5a42; }
+
+/* pulsing running indicator */
+@keyframes mosPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.82); } }
+.mos-pulse { animation: mosPulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .mos-pulse { animation: none; } }
+
+/* row hover */
+.mos-row { transition: background .12s, border-color .12s; }
+.mos-row:hover { background: rgba(0,255,136,0.05) !important; }
+
+/* blocked diagonal stripe panel */
+.mos-stripe {
+  background:
+    repeating-linear-gradient(45deg, rgba(255,68,102,0.16) 0 10px, rgba(255,68,102,0.04) 10px 20px),
+    #15080c;
+}
+
+/* canvas grid background */
+.mos-grid-bg {
+  background-color: #090d0c;
+  background-image:
+    linear-gradient(rgba(26,58,42,0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,58,42,0.35) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+select.mos-select { outline: none; cursor: pointer; }
+select.mos-select:focus { border-color: #00ff88 !important; }
+
+/* markdown styling — mono code, tight spacing */
+.mos-md { color: #cfe0d7; font-size: 13.5px; line-height: 1.6; }
+.mos-md h1 { font-size: 18px; color: #e6f1ec; margin: 0 0 10px; font-weight: 700; }
+.mos-md h2 { font-size: 15px; color: #e6f1ec; margin: 16px 0 8px; font-weight: 700; }
+.mos-md h3 { font-size: 13.5px; color: #9fb3a9; margin: 14px 0 6px; font-weight: 700; letter-spacing: 0.02em; }
+.mos-md p { margin: 8px 0; }
+.mos-md ul, .mos-md ol { margin: 8px 0; padding-left: 20px; }
+.mos-md li { margin: 3px 0; }
+.mos-md strong { color: #e6f1ec; font-weight: 700; }
+.mos-md a { color: #00ddff; }
+.mos-md blockquote { margin: 10px 0; padding: 6px 14px; border-left: 3px solid #ffaa00; background: rgba(255,170,0,0.06); color: #d8c39a; border-radius: 0 6px 6px 0; }
+.mos-md code { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: #11161a; border: 1px solid #1a3a2a; border-radius: 4px; padding: 1px 5px; color: #00ff88; }
+.mos-md pre { background: #080b0a; border: 1px solid #1a3a2a; border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: 10px 0; }
+.mos-md pre code { background: transparent; border: none; padding: 0; color: #9fe6c4; font-size: 12px; }
+.mos-md hr { border: none; border-top: 1px solid #1a3a2a; margin: 14px 0; }

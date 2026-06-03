@@ -1,0 +1,93 @@
+services:
+  control-plane:
+    build: ./control-plane
+    ports: ["8080:8080"]
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    networks: [edge, internal]
+    healthcheck:
+      # python:3.12-slim'de curl yok; built-in urllib kullaniyoruz.
+      # Migration + uvicorn hazir oldugunda / endpoint 200 doner.
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: maestros
+      POSTGRES_PASSWORD: maestros
+      POSTGRES_DB: maestros
+    volumes: [maestros_db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U maestros"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]          # host'tan da erişilebilir kalsın
+    volumes:
+      - ollama_data:/root/.ollama   # mevcut modeller korunur, yeniden indirilmez
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 15s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  scheduler:
+    build: ./control-plane
+    command: ["python", "-m", "app.scheduler.main"]
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      control-plane:
+        condition: service_healthy   # alembic upgrade head + uvicorn hazir olduktan sonra basla
+    networks: [internal]
+    restart: unless-stopped
+
+  ui:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app                      # kaynak kodlar host'tan gelir (hot reload için)
+      - ui_node_modules:/app/node_modules    # node_modules Alpine'a özgü, Windows'takiyle karışmaz
+    command: sh -c "npm install && npm run dev -- --host"
+    ports: ["5173:5173"]
+    environment:
+      VITE_USE_MOCK: "false"
+      VITE_API_BASE_URL: "http://localhost:8080"  # tarayıcı host üzerinden API'ye ulaşır
+    depends_on:
+      control-plane:
+        condition: service_healthy
+    networks: [edge]
+    # Dev server — prod'da nginx + npm run build ile değiştir
+
+volumes:
+  maestros_db:
+  ollama_data:
+    external: true   # mevcut volume'u devral, yeni yaratma
+  ui_node_modules:   # Alpine'da temiz npm install için ayrı volume
+
+networks:
+  edge:
+  internal:

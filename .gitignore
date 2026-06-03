@@ -1,0 +1,59 @@
+# ── Ortam değişkenleri & gizli bilgiler ──────────────────────────────────────
+# ASLA GitHub'a gitmesin — API key, şifre, DB bağlantısı burada
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+*.egg
+
+# ── pytest / test artifacts ───────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ── Alembic ───────────────────────────────────────────────────────────────────
+# Migration dosyaları içinde kalmalı, sadece geçici çıktılar hariç
+*.pyc
+
+# ── Node.js / Frontend ────────────────────────────────────────────────────────
+node_modules/
+**/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.tsbuildinfo
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# Yerel override dosyaları (docker-compose.override.yml gibi)
+docker-compose.override.yml
+
+# ── IDE & Editör ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Geçici dosyalar ───────────────────────────────────────────────────────────
+*.log
+*.tmp
+tmp/
+temp/
