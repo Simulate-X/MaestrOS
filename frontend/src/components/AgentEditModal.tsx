@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { roleMeta } from "../lib/colors";
 import { usd } from "../lib/helpers";
@@ -40,6 +40,69 @@ function Segmented({ value, options, onChange }: { value: string; options: { val
           background: value === o.value ? "#00ff88" : "transparent", border: "none",
         }}>{o.label}</button>
       ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Searchable model combobox — chip grid'in yerini alır.
+// options: hangi provider seçildiyse ona ait dizi (ollama → live, cloud → catalog)
+// loading: true iken placeholder "loading models…" gösterir, liste kapalı kalır
+// ---------------------------------------------------------------------------
+function ModelCombobox({ value, onChange, options, loading = false, placeholder }: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  loading?: boolean;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Click-outside → kapat
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const filtered = options.filter((m) => m.toLowerCase().includes(value.toLowerCase()));
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <input
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
+        placeholder={loading ? "loading models…" : placeholder}
+        style={amInput}
+      />
+      {open && filtered.length > 0 && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 3px)", left: 0, right: 0, zIndex: 200,
+          background: "#0e1413", border: "1px solid #1a3a2a", borderRadius: 7,
+          maxHeight: 200, overflowY: "auto", boxShadow: "0 8px 24px -8px rgba(0,0,0,0.9)",
+        }}>
+          {filtered.map((m) => (
+            <button
+              key={m}
+              type="button"
+              // onMouseDown + preventDefault: input blur'dan önce click'i yakalar
+              onMouseDown={(e) => { e.preventDefault(); onChange(m); setOpen(false); }}
+              className="font-mono"
+              style={{
+                display: "block", width: "100%", textAlign: "left",
+                padding: "7px 10px", border: "none", cursor: "pointer", fontSize: 12.5,
+                background: value === m ? "rgba(0,255,136,0.08)" : "transparent",
+                color: value === m ? "#00ff88" : "#c8ddd4",
+              }}
+            >{m}</button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -157,49 +220,18 @@ export default function AgentEditModal({ agent, companyId, onSave, onClose }: {
                 ]} />
               </AMField>
               <AMField label={t("agentModal.model")} hint={provider === "ollama" ? t("agentModal.localModel") : t("agentModal.cloud")}>
-                {provider === "ollama" ? (
-                  ollamaLoading ? (
-                    <div className="font-mono" style={{ color: "#5f7269", fontSize: 12, padding: "8px 0" }}>⏳ loading models…</div>
-                  ) : ollamaError || !ollamaModels?.length ? (
-                    /* Ollama kapalı veya boş → serbest metin girişi, kullanıcı elle yazar */
-                    <>
-                      <div className="font-mono" style={{ color: "#ffaa00", fontSize: 11, marginBottom: 6 }}>
-                        ⚠ Ollama'ya ulaşılamadı — model adını elle yaz
-                      </div>
-                      <input value={model} onChange={(e) => setModel(e.target.value)} placeholder={t("agentModal.modelPlaceholder")} style={amInput} />
-                    </>
-                  ) : (
-                    /* Gerçek kurulu modeller — chip'ler + datalist */
-                    <>
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 7 }}>
-                        {ollamaModels.map((mdl) => (
-                          <button key={mdl} type="button" onClick={() => setModel(mdl)} className="font-mono" style={{
-                            padding: "3px 9px", borderRadius: 5, fontSize: 11, cursor: "pointer",
-                            color: model === mdl ? "#00ff88" : "#9fb3a9", background: model === mdl ? "rgba(0,255,136,0.1)" : "#0a0d0c",
-                            border: "1px solid " + (model === mdl ? "#00ff8866" : "#1a3a2a"),
-                          }}>{mdl}</button>
-                        ))}
-                      </div>
-                      <input list="am-models-ollama" value={model} onChange={(e) => setModel(e.target.value)} placeholder={t("agentModal.modelPlaceholder")} style={amInput} />
-                      <datalist id="am-models-ollama">{ollamaModels.map((mdl) => <option key={mdl} value={mdl} />)}</datalist>
-                    </>
-                  )
-                ) : (
-                  /* Cloud provider — MODEL_CATALOG'dan (değişmedi) */
-                  <>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 7 }}>
-                      {catalog!.recommended.map((mdl) => (
-                        <button key={mdl} type="button" onClick={() => setModel(mdl)} className="font-mono" style={{
-                          padding: "3px 9px", borderRadius: 5, fontSize: 11, cursor: "pointer",
-                          color: model === mdl ? "#00ff88" : "#9fb3a9", background: model === mdl ? "rgba(0,255,136,0.1)" : "#0a0d0c",
-                          border: "1px solid " + (model === mdl ? "#00ff8866" : "#1a3a2a"),
-                        }}>★ {mdl}</button>
-                      ))}
-                    </div>
-                    <input list="am-models-cloud" value={model} onChange={(e) => setModel(e.target.value)} placeholder={t("agentModal.modelPlaceholder")} style={amInput} />
-                    <datalist id="am-models-cloud">{catalog!.all.map((mdl) => <option key={mdl} value={mdl} />)}</datalist>
-                  </>
+                {ollamaError && provider === "ollama" && (
+                  <div className="font-mono" style={{ color: "#ffaa00", fontSize: 11, marginBottom: 6 }}>
+                    ⚠ Ollama'ya ulaşılamadı — model adını elle yaz
+                  </div>
                 )}
+                <ModelCombobox
+                  value={model}
+                  onChange={setModel}
+                  options={provider === "ollama" ? (ollamaModels ?? []) : catalog!.all}
+                  loading={ollamaLoading && provider === "ollama"}
+                  placeholder={t("agentModal.modelPlaceholder")}
+                />
               </AMField>
               <AMField label={t("agentModal.defaultSkill")}>
                 <select value={skillId} onChange={(e) => setSkillId(Number(e.target.value))} className="mos-select" style={amInput}>
