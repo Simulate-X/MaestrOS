@@ -3,12 +3,13 @@ import { useTranslation } from "react-i18next";
 import { roleMeta } from "../lib/colors";
 import { usd } from "../lib/helpers";
 import { store, mock } from "../lib/mock";
+import { useOllamaModels } from "../lib/queries";
 import type { Agent, Provider } from "../lib/types";
 import RoleBadge from "./RoleBadge";
 
-const MODEL_CATALOG: Record<Provider, { recommended: string[]; all: string[]; kind: "local" | "cloud" }> = {
-  ollama: { recommended: ["qwen2.5-coder:14b", "qwen2.5-coder:32b", "deepseek-coder-v2:16b"], all: ["qwen2.5-coder:14b", "qwen2.5-coder:32b", "deepseek-coder-v2:16b", "codellama:13b", "llama3.3:70b", "mistral-small:24b"], kind: "local" },
-  anthropic: { recommended: ["claude-sonnet-4", "claude-haiku-4.5"], all: ["claude-sonnet-4", "claude-haiku-4.5", "claude-opus-4"], kind: "cloud" },
+// Ollama kaldırıldı — artık /ollama/models endpoint'inden dinamik geliyor.
+const MODEL_CATALOG: Record<Exclude<Provider, "ollama">, { recommended: string[]; all: string[]; kind: "cloud" }> = {
+  anthropic:  { recommended: ["claude-sonnet-4", "claude-haiku-4.5"], all: ["claude-sonnet-4", "claude-haiku-4.5", "claude-opus-4"], kind: "cloud" },
   openrouter: { recommended: ["anthropic/claude-haiku-4.5", "anthropic/claude-sonnet-4", "meta-llama/llama-3.3-70b-instruct"], all: ["anthropic/claude-haiku-4.5", "anthropic/claude-sonnet-4", "meta-llama/llama-3.3-70b-instruct", "google/gemini-2.0-flash", "qwen/qwen-2.5-coder-32b-instruct"], kind: "cloud" },
 };
 const ROLE_OPTS = ["ceo", "eng", "qa", "planner", "custom"];
@@ -67,15 +68,18 @@ export default function AgentEditModal({ agent, companyId, onSave, onClose }: {
   const [reportsTo, setReportsTo] = useState<string>(agent && agent.reporting_to != null ? String(agent.reporting_to) : "");
   const [status, setStatus] = useState(agent ? agent.status : "active");
 
-  const catalog = MODEL_CATALOG[provider] || MODEL_CATALOG.ollama;
+  const { data: ollamaModels, isLoading: ollamaLoading, isError: ollamaError } = useOllamaModels(provider === "ollama");
+  const catalog = provider !== "ollama" ? MODEL_CATALOG[provider] : null;
   const bosses = useMemo(() => store.agents.filter((a) => a.company_id === cid && a.status !== "terminated" && (!agent || a.id !== agent.id)), [cid, agent]);
   const r = roleMeta(role);
 
   function changeProvider(p: string) {
     const pp = p as Provider;
     setProvider(pp);
-    const cat = MODEL_CATALOG[pp];
-    if (cat && !cat.all.includes(model)) setModel(cat.recommended[0]);
+    if (pp !== "ollama") {
+      const cat = MODEL_CATALOG[pp];
+      if (!cat.all.includes(model)) setModel(cat.recommended[0]);
+    }
   }
 
   function submit() {
@@ -152,18 +156,50 @@ export default function AgentEditModal({ agent, companyId, onSave, onClose }: {
                   { value: "ollama", label: "ollama" }, { value: "anthropic", label: "anthropic" }, { value: "openrouter", label: "openrouter" },
                 ]} />
               </AMField>
-              <AMField label={t("agentModal.model")} hint={t("agentModal.modelHint", { kind: catalog.kind === "local" ? t("agentModal.localModel") : t("agentModal.cloud") })}>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 7 }}>
-                  {catalog.recommended.map((mdl) => (
-                    <button key={mdl} type="button" onClick={() => setModel(mdl)} className="font-mono" style={{
-                      padding: "3px 9px", borderRadius: 5, fontSize: 11, cursor: "pointer",
-                      color: model === mdl ? "#00ff88" : "#9fb3a9", background: model === mdl ? "rgba(0,255,136,0.1)" : "#0a0d0c",
-                      border: "1px solid " + (model === mdl ? "#00ff8866" : "#1a3a2a"),
-                    }}>★ {mdl}</button>
-                  ))}
-                </div>
-                <input list="am-models" value={model} onChange={(e) => setModel(e.target.value)} placeholder={t("agentModal.modelPlaceholder")} style={amInput} />
-                <datalist id="am-models">{catalog.all.map((mdl) => <option key={mdl} value={mdl} />)}</datalist>
+              <AMField label={t("agentModal.model")} hint={provider === "ollama" ? t("agentModal.localModel") : t("agentModal.cloud")}>
+                {provider === "ollama" ? (
+                  ollamaLoading ? (
+                    <div className="font-mono" style={{ color: "#5f7269", fontSize: 12, padding: "8px 0" }}>⏳ loading models…</div>
+                  ) : ollamaError || !ollamaModels?.length ? (
+                    /* Ollama kapalı veya boş → serbest metin girişi, kullanıcı elle yazar */
+                    <>
+                      <div className="font-mono" style={{ color: "#ffaa00", fontSize: 11, marginBottom: 6 }}>
+                        ⚠ Ollama'ya ulaşılamadı — model adını elle yaz
+                      </div>
+                      <input value={model} onChange={(e) => setModel(e.target.value)} placeholder={t("agentModal.modelPlaceholder")} style={amInput} />
+                    </>
+                  ) : (
+                    /* Gerçek kurulu modeller — chip'ler + datalist */
+                    <>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 7 }}>
+                        {ollamaModels.map((mdl) => (
+                          <button key={mdl} type="button" onClick={() => setModel(mdl)} className="font-mono" style={{
+                            padding: "3px 9px", borderRadius: 5, fontSize: 11, cursor: "pointer",
+                            color: model === mdl ? "#00ff88" : "#9fb3a9", background: model === mdl ? "rgba(0,255,136,0.1)" : "#0a0d0c",
+                            border: "1px solid " + (model === mdl ? "#00ff8866" : "#1a3a2a"),
+                          }}>{mdl}</button>
+                        ))}
+                      </div>
+                      <input list="am-models-ollama" value={model} onChange={(e) => setModel(e.target.value)} placeholder={t("agentModal.modelPlaceholder")} style={amInput} />
+                      <datalist id="am-models-ollama">{ollamaModels.map((mdl) => <option key={mdl} value={mdl} />)}</datalist>
+                    </>
+                  )
+                ) : (
+                  /* Cloud provider — MODEL_CATALOG'dan (değişmedi) */
+                  <>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 7 }}>
+                      {catalog!.recommended.map((mdl) => (
+                        <button key={mdl} type="button" onClick={() => setModel(mdl)} className="font-mono" style={{
+                          padding: "3px 9px", borderRadius: 5, fontSize: 11, cursor: "pointer",
+                          color: model === mdl ? "#00ff88" : "#9fb3a9", background: model === mdl ? "rgba(0,255,136,0.1)" : "#0a0d0c",
+                          border: "1px solid " + (model === mdl ? "#00ff8866" : "#1a3a2a"),
+                        }}>★ {mdl}</button>
+                      ))}
+                    </div>
+                    <input list="am-models-cloud" value={model} onChange={(e) => setModel(e.target.value)} placeholder={t("agentModal.modelPlaceholder")} style={amInput} />
+                    <datalist id="am-models-cloud">{catalog!.all.map((mdl) => <option key={mdl} value={mdl} />)}</datalist>
+                  </>
+                )}
               </AMField>
               <AMField label={t("agentModal.defaultSkill")}>
                 <select value={skillId} onChange={(e) => setSkillId(Number(e.target.value))} className="mos-select" style={amInput}>

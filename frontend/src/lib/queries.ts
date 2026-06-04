@@ -127,6 +127,15 @@ export function useActivitySeed() {
   });
 }
 
+export function useOllamaModels(enabled: boolean) {
+  return useQuery({
+    queryKey: ["ollama-models"],
+    queryFn: () => (USE_MOCK ? mock.getOllamaModels() : api.getOllamaModels()),
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
 // ---- mutations -------------------------------------------------------------
 export function useCreateTicket() {
   const qc = useQueryClient();
