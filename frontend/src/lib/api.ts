@@ -35,6 +35,10 @@ export const api = {
     const { data } = await client.get(`/${provider}/models`);
     return data.models ?? [];
   },
+  testProvider: async (provider: string, model: string) => {
+    const { data } = await client.post(`/${provider}/test`, { model, params: { max_tokens: 16 } });
+    return data as { ok: boolean; message: string; latency_ms: number; cost_usd: number };
+  },
 
   // mutations
   createTicket: (input: CreateTicketInput) =>

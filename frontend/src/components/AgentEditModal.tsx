@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { roleMeta } from "../lib/colors";
 import { usd } from "../lib/helpers";
 import { store, mock } from "../lib/mock";
-import { useProviderModels } from "../lib/queries";
+import { useProviderModels, useTestProvider } from "../lib/queries";
 import type { Agent, Provider } from "../lib/types";
 import RoleBadge from "./RoleBadge";
 
@@ -129,6 +129,7 @@ export default function AgentEditModal({ agent, companyId, onSave, onClose }: {
   const [status, setStatus] = useState(agent ? agent.status : "active");
 
   const { data: providerModels, isLoading: modelsLoading, isError: modelsError } = useProviderModels(provider);
+  const testMutation = useTestProvider();
   const bosses = useMemo(() => store.agents.filter((a) => a.company_id === cid && a.status !== "terminated" && (!agent || a.id !== agent.id)), [cid, agent]);
   const r = roleMeta(role);
 
@@ -224,6 +225,30 @@ export default function AgentEditModal({ agent, companyId, onSave, onClose }: {
                   loading={modelsLoading}
                   placeholder={t("agentModal.modelPlaceholder")}
                 />
+                {/* Test butonu */}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+                  <button
+                    type="button"
+                    disabled={!model.trim() || testMutation.isPending}
+                    onClick={() => testMutation.mutate({ provider, model })}
+                    className="font-mono"
+                    style={{
+                      padding: "5px 14px", borderRadius: 6, fontSize: 12, cursor: model.trim() ? "pointer" : "not-allowed",
+                      color: "#0a0d0c", background: model.trim() ? "#00ddff" : "#1a3a2a",
+                      border: "none", fontWeight: 700, opacity: testMutation.isPending ? 0.6 : 1,
+                    }}
+                  >
+                    {testMutation.isPending ? "testing…" : "Test"}
+                  </button>
+                  {/* Sonuç göstergesi */}
+                  {testMutation.isSuccess && (
+                    <span className="font-mono" style={{ fontSize: 12, color: testMutation.data.ok ? "#00ff88" : "#ff6680" }}>
+                      {testMutation.data.ok
+                        ? `✓ ${testMutation.data.latency_ms}ms`
+                        : `✗ ${testMutation.data.message}`}
+                    </span>
+                  )}
+                </div>
               </AMField>
               <AMField label={t("agentModal.defaultSkill")}>
                 <select value={skillId} onChange={(e) => setSkillId(Number(e.target.value))} className="mos-select" style={amInput}>

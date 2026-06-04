@@ -288,6 +288,8 @@ const companies = [
         .map((e) => ({ ...e, ts: store.loadedAt - (e as unknown as { tAgo: number }).tAgo * 1000 }))
         .sort((a, b) => (b.ts as number) - (a.ts as number)) as unknown as ActivityEvent[]),
     getLiveTemplates: () => store.liveTemplates as unknown as ActivityEvent[],
+    testProvider: (_provider: string, _model: string) =>
+      ok({ ok: true, message: "ok", latency_ms: 42, cost_usd: 0 }),
     getProviderModels: (provider: string) => ok(
       provider === "ollama"      ? ["qwen2.5-coder:14b", "llama3.1:latest", "gemma-msi:latest"]
       : provider === "anthropic" ? ["claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-4-5"]

@@ -136,6 +136,13 @@ export function useProviderModels(provider: string) {
 }
 
 // ---- mutations -------------------------------------------------------------
+export function useTestProvider() {
+  return useMutation({
+    mutationFn: ({ provider, model }: { provider: string; model: string }) =>
+      USE_MOCK ? mock.testProvider(provider, model) : api.testProvider(provider, model),
+  });
+}
+
 export function useCreateTicket() {
   const qc = useQueryClient();
   return useMutation({
