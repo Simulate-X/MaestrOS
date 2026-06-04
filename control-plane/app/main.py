@@ -5,6 +5,7 @@ from app.db import engine
 from app.api import agents, tickets, companies, skills
 from app.api import workflows, context_docs
 from app.api import runs, audit
+from app.api import providers
 
 
 @asynccontextmanager
@@ -38,3 +39,4 @@ app.include_router(workflows.router)
 app.include_router(context_docs.router)
 app.include_router(runs.router)
 app.include_router(audit.router)
+app.include_router(providers.router)

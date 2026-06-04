@@ -65,6 +65,30 @@ class OllamaAdapter(ProviderAdapter):
         self.base_url = base_url.rstrip("/")
         self.model = model
 
+    # ------------------------------------------------------------------
+    # Model keşfi — /api/tags endpoint'inden kurulu modelleri çeker.
+    # classmethod: self.model gerekmez, sadece base_url lazım.
+    # ------------------------------------------------------------------
+    @classmethod
+    async def list_models(cls, base_url: str) -> list[str]:
+        """
+        Ollama'daki kurulu model isimlerini döndür.
+
+        Tek sorumluluk: Ollama'ya git, isimleri topla, döndür.
+        Hata yönetimi çağırana ait — buradan exception fırlatırız, yakalamayız.
+
+        Filtre: embedding modelleri çıkar (ajan olarak çalıştırılamaz).
+        """
+        async with httpx.AsyncClient(timeout=5) as client:
+            resp = await client.get(f"{base_url.rstrip('/')}/api/tags")
+            resp.raise_for_status()                          # 4xx/5xx → HTTPStatusError
+        data = resp.json()
+        return [
+            m["name"]
+            for m in data.get("models", [])                  # "models" yoksa KeyError değil []
+            if "embed" not in m.get("name", "").lower()      # embedding modelleri filtrele
+        ]
+
     async def run(self, packet: RunPacket) -> RunResult:
         try:
             async with httpx.AsyncClient(timeout=300) as client:
