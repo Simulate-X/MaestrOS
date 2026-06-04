@@ -37,6 +37,17 @@ class AnthropicAdapter(ProviderAdapter):
             "claude-haiku-4-5",
         ]
 
+    @classmethod
+    def from_agent(cls, agent) -> "AnthropicAdapter":
+        from app.config import settings
+        if not settings.ANTHROPIC_API_KEY:
+            raise ValueError("agent.provider='anthropic' requires ANTHROPIC_API_KEY in .env")
+        return cls(
+            api_key=settings.ANTHROPIC_API_KEY.get_secret_value(),
+            model=agent.model,
+            params=agent.params or {},
+        )
+
     def __init__(self, api_key: str, model: str, params: dict | None = None):
         if not api_key:
             raise ValueError("AnthropicAdapter requires ANTHROPIC_API_KEY")

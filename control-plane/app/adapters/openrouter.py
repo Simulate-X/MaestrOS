@@ -24,6 +24,17 @@ _API_BASE = "https://openrouter.ai/api/v1/chat/completions"
 class OpenRouterAdapter(ProviderAdapter):
     """OpenRouter chat completions (OpenAI-compatible) adapter."""
 
+    @classmethod
+    def from_agent(cls, agent) -> "OpenRouterAdapter":
+        from app.config import settings
+        if not settings.OPENROUTER_API_KEY:
+            raise ValueError("agent.provider='openrouter' requires OPENROUTER_API_KEY in .env")
+        return cls(
+            api_key=settings.OPENROUTER_API_KEY.get_secret_value(),
+            model=agent.model,
+            params=agent.params or {},
+        )
+
     def __init__(self, api_key: str, model: str, params: dict | None = None):
         if not api_key:
             raise ValueError("OpenRouterAdapter requires OPENROUTER_API_KEY")

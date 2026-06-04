@@ -67,6 +67,11 @@ class OllamaAdapter(ProviderAdapter):
         self.model = model
 
     @classmethod
+    def from_agent(cls, agent) -> "OllamaAdapter":
+        from app.config import settings
+        return cls(settings.OLLAMA_BASE_URL, agent.model)
+
+    @classmethod
     async def list_models(cls) -> list[str]:
         """
         Ollama'daki kurulu model isimlerini döndür.
