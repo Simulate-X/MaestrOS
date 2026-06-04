@@ -3,15 +3,12 @@ import { useTranslation } from "react-i18next";
 import { roleMeta } from "../lib/colors";
 import { usd } from "../lib/helpers";
 import { store, mock } from "../lib/mock";
-import { useOllamaModels } from "../lib/queries";
+import { useProviderModels } from "../lib/queries";
 import type { Agent, Provider } from "../lib/types";
 import RoleBadge from "./RoleBadge";
 
-// Ollama kaldırıldı — artık /ollama/models endpoint'inden dinamik geliyor.
-const MODEL_CATALOG: Record<Exclude<Provider, "ollama">, { recommended: string[]; all: string[]; kind: "cloud" }> = {
-  anthropic:  { recommended: ["claude-sonnet-4", "claude-haiku-4.5"], all: ["claude-sonnet-4", "claude-haiku-4.5", "claude-opus-4"], kind: "cloud" },
-  openrouter: { recommended: ["anthropic/claude-haiku-4.5", "anthropic/claude-sonnet-4", "meta-llama/llama-3.3-70b-instruct"], all: ["anthropic/claude-haiku-4.5", "anthropic/claude-sonnet-4", "meta-llama/llama-3.3-70b-instruct", "google/gemini-2.0-flash", "qwen/qwen-2.5-coder-32b-instruct"], kind: "cloud" },
-};
+// MODEL_CATALOG tamamen kaldırıldı — tüm provider'lar backend'den dinamik geliyor.
+// ollama → GET /ollama/models, anthropic → GET /anthropic/models, openrouter → GET /openrouter/models
 const ROLE_OPTS = ["ceo", "eng", "qa", "planner", "custom"];
 
 const amInput: React.CSSProperties = {
@@ -131,18 +128,13 @@ export default function AgentEditModal({ agent, companyId, onSave, onClose }: {
   const [reportsTo, setReportsTo] = useState<string>(agent && agent.reporting_to != null ? String(agent.reporting_to) : "");
   const [status, setStatus] = useState(agent ? agent.status : "active");
 
-  const { data: ollamaModels, isLoading: ollamaLoading, isError: ollamaError } = useOllamaModels(provider === "ollama");
-  const catalog = provider !== "ollama" ? MODEL_CATALOG[provider] : null;
+  const { data: providerModels, isLoading: modelsLoading, isError: modelsError } = useProviderModels(provider);
   const bosses = useMemo(() => store.agents.filter((a) => a.company_id === cid && a.status !== "terminated" && (!agent || a.id !== agent.id)), [cid, agent]);
   const r = roleMeta(role);
 
   function changeProvider(p: string) {
-    const pp = p as Provider;
-    setProvider(pp);
-    if (pp !== "ollama") {
-      const cat = MODEL_CATALOG[pp];
-      if (!cat.all.includes(model)) setModel(cat.recommended[0]);
-    }
+    setProvider(p as Provider);
+    setModel(""); // provider değişince model sıfırla, kullanıcı listeden seçsin
   }
 
   function submit() {
@@ -220,16 +212,16 @@ export default function AgentEditModal({ agent, companyId, onSave, onClose }: {
                 ]} />
               </AMField>
               <AMField label={t("agentModal.model")} hint={provider === "ollama" ? t("agentModal.localModel") : t("agentModal.cloud")}>
-                {ollamaError && provider === "ollama" && (
+                {modelsError && (
                   <div className="font-mono" style={{ color: "#ffaa00", fontSize: 11, marginBottom: 6 }}>
-                    ⚠ Ollama'ya ulaşılamadı — model adını elle yaz
+                    ⚠ Model listesi alınamadı — adını elle yaz
                   </div>
                 )}
                 <ModelCombobox
                   value={model}
                   onChange={setModel}
-                  options={provider === "ollama" ? (ollamaModels ?? []) : catalog!.all}
-                  loading={ollamaLoading && provider === "ollama"}
+                  options={providerModels ?? []}
+                  loading={modelsLoading}
                   placeholder={t("agentModal.modelPlaceholder")}
                 />
               </AMField>

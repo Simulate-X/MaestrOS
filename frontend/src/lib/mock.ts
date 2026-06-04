@@ -288,7 +288,11 @@ const companies = [
         .map((e) => ({ ...e, ts: store.loadedAt - (e as unknown as { tAgo: number }).tAgo * 1000 }))
         .sort((a, b) => (b.ts as number) - (a.ts as number)) as unknown as ActivityEvent[]),
     getLiveTemplates: () => store.liveTemplates as unknown as ActivityEvent[],
-    getOllamaModels: () => ok(["qwen2.5-coder:14b", "llama3.1:latest", "gemma-msi:latest"]),
+    getProviderModels: (provider: string) => ok(
+      provider === "ollama"      ? ["qwen2.5-coder:14b", "llama3.1:latest", "gemma-msi:latest"]
+      : provider === "anthropic" ? ["claude-opus-4-5", "claude-sonnet-4-5", "claude-haiku-4-5"]
+      : /* openrouter */           ["anthropic/claude-haiku-4.5", "anthropic/claude-sonnet-4", "meta-llama/llama-3.3-70b-instruct"]
+    ),
 
     // ---- mutations (Hire / Edit / Fire, approve / reject) -------------------
     nextAgentId: (() => { let n = 40; return () => ++n; })(),

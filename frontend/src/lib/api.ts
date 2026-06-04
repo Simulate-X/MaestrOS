@@ -31,8 +31,8 @@ export const api = {
   getAudit: (params: { company_id?: number; actor_kind?: string; action?: string; target_kind?: string; since?: string; limit?: number; offset?: number } = {}) =>
     data<AuditEvent[]>(client.get("/audit", { params })),
 
-  getOllamaModels: async (): Promise<string[]> => {
-    const { data } = await client.get("/ollama/models");
+  getProviderModels: async (provider: string): Promise<string[]> => {
+    const { data } = await client.get(`/${provider}/models`);
     return data.models ?? [];
   },
 

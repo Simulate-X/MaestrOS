@@ -127,11 +127,10 @@ export function useActivitySeed() {
   });
 }
 
-export function useOllamaModels(enabled: boolean) {
+export function useProviderModels(provider: string) {
   return useQuery({
-    queryKey: ["ollama-models"],
-    queryFn: () => (USE_MOCK ? mock.getOllamaModels() : api.getOllamaModels()),
-    enabled,
+    queryKey: ["provider-models", provider],
+    queryFn: () => (USE_MOCK ? mock.getProviderModels(provider) : api.getProviderModels(provider)),
     staleTime: 60_000,
   });
 }
