@@ -12,7 +12,7 @@ from decimal import Decimal
 
 import httpx
 
-from app.adapters.base import ProviderAdapter, RunPacket, RunResult
+from app.adapters.base import ProviderAdapter, RunPacket, RunResult, register_provider
 from app.adapters.pricing import get_pricing, compute_cost_usd
 
 log = logging.getLogger("anthropic_adapter")
@@ -21,8 +21,21 @@ _API_BASE = "https://api.anthropic.com/v1/messages"
 _ANTHROPIC_VERSION = "2023-06-01"
 
 
+@register_provider("anthropic")
 class AnthropicAdapter(ProviderAdapter):
     """Native Anthropic Messages API adapter."""
+
+    @classmethod
+    async def list_models(cls) -> list[str]:
+        """
+        Anthropic'in public model listesi API'si yok — bilinen modeller statik liste.
+        İmza diğer adapter'larla aynı: parametresiz, registry'den çağrılabilir.
+        """
+        return [
+            "claude-opus-4-5",
+            "claude-sonnet-4-5",
+            "claude-haiku-4-5",
+        ]
 
     def __init__(self, api_key: str, model: str, params: dict | None = None):
         if not api_key:

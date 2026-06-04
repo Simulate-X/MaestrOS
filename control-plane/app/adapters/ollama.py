@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import httpx
 
-from app.adapters.base import ProviderAdapter, RunPacket, RunResult
+from app.adapters.base import ProviderAdapter, RunPacket, RunResult, register_provider
 
 log = logging.getLogger("ollama_adapter")
 
@@ -60,33 +60,33 @@ def _parse_ollama_body(body: str) -> tuple[str, int, int]:
     return "".join(content_parts), prompt_tokens, eval_tokens
 
 
+@register_provider("ollama")
 class OllamaAdapter(ProviderAdapter):
     def __init__(self, base_url: str, model: str):
         self.base_url = base_url.rstrip("/")
         self.model = model
 
-    # ------------------------------------------------------------------
-    # Model keşfi — /api/tags endpoint'inden kurulu modelleri çeker.
-    # classmethod: self.model gerekmez, sadece base_url lazım.
-    # ------------------------------------------------------------------
     @classmethod
-    async def list_models(cls, base_url: str) -> list[str]:
+    async def list_models(cls) -> list[str]:
         """
         Ollama'daki kurulu model isimlerini döndür.
 
         Tek sorumluluk: Ollama'ya git, isimleri topla, döndür.
-        Hata yönetimi çağırana ait — buradan exception fırlatırız, yakalamayız.
+        Bağımlılığını (base_url) kendi içinde settings'ten çözer.
+        Hata yönetimi çağırana ait — exception fırlatır, yakalamaz.
 
         Filtre: embedding modelleri çıkar (ajan olarak çalıştırılamaz).
         """
+        from app.config import settings  # döngüsel import'tan kaçınmak için lazy
+        base_url = settings.OLLAMA_BASE_URL
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.get(f"{base_url.rstrip('/')}/api/tags")
-            resp.raise_for_status()                          # 4xx/5xx → HTTPStatusError
+            resp.raise_for_status()
         data = resp.json()
         return [
             m["name"]
-            for m in data.get("models", [])                  # "models" yoksa KeyError değil []
-            if "embed" not in m.get("name", "").lower()      # embedding modelleri filtrele
+            for m in data.get("models", [])
+            if "embed" not in m.get("name", "").lower()
         ]
 
     async def run(self, packet: RunPacket) -> RunResult:

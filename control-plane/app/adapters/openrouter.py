@@ -12,7 +12,7 @@ from decimal import Decimal
 
 import httpx
 
-from app.adapters.base import ProviderAdapter, RunPacket, RunResult
+from app.adapters.base import ProviderAdapter, RunPacket, RunResult, register_provider
 from app.adapters.pricing import get_pricing, compute_cost_usd
 
 log = logging.getLogger("openrouter_adapter")
@@ -20,6 +20,7 @@ log = logging.getLogger("openrouter_adapter")
 _API_BASE = "https://openrouter.ai/api/v1/chat/completions"
 
 
+@register_provider("openrouter")
 class OpenRouterAdapter(ProviderAdapter):
     """OpenRouter chat completions (OpenAI-compatible) adapter."""
 
@@ -33,6 +34,34 @@ class OpenRouterAdapter(ProviderAdapter):
 
     def __repr__(self) -> str:
         return f"OpenRouterAdapter(model={self.model!r})"
+
+    @classmethod
+    async def list_models(cls) -> list[str]:
+        """
+        OpenRouter'daki aktif modellerin listesini döndür.
+
+        Bağımlılığını (api_key) kendi içinde settings'ten çözer.
+        API key olmadan da çalışır (public endpoint), ama key varsa daha
+        kapsamlı sonuç dönebilir.
+        """
+        from app.config import settings  # lazy import
+        headers = {
+            "HTTP-Referer": "https://maestros.local",
+            "X-Title": "MaestrOS",
+        }
+        if settings.OPENROUTER_API_KEY:
+            headers["Authorization"] = f"Bearer {settings.OPENROUTER_API_KEY.get_secret_value()}"
+
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get("https://openrouter.ai/api/v1/models", headers=headers)
+            resp.raise_for_status()
+
+        data = resp.json()
+        return [
+            m["id"]
+            for m in data.get("data", [])
+            if m.get("id")
+        ]
 
     async def run(self, packet: RunPacket) -> RunResult:
         try:
