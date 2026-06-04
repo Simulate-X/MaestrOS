@@ -1,15 +1,15 @@
 from app.adapters.base import ProviderAdapter, RunPacket, RunResult, ADAPTER_REGISTRY
-from app.adapters.ollama import OllamaAdapter
-from app.adapters.anthropic import AnthropicAdapter
-from app.adapters.openrouter import OpenRouterAdapter
+
+# Side-effect imports — @register_provider dekoratörlerini tetikler.
+# Bu satırlar "kullanılmıyor" gibi görünse de silinirse registry boşalır
+# ve build_adapter/providers.py her çağrıda NotImplementedError fırlatır.
+# Linter uyarısı için: # noqa: F401
+from app.adapters.ollama import OllamaAdapter        # noqa: F401
+from app.adapters.anthropic import AnthropicAdapter  # noqa: F401
+from app.adapters.openrouter import OpenRouterAdapter  # noqa: F401
 
 
 def build_adapter(agent) -> ProviderAdapter:
-    """Agent'ın provider'ına göre uygun adapter'ı yarat.
-
-    Kurulum mantığı (hangi setting'i okuyacağı) her adapter'ın
-    kendi from_agent() classmethod'unda — burası sadece dispatch eder.
-    """
     adapter_cls = ADAPTER_REGISTRY.get(agent.provider)
     if not adapter_cls:
         raise NotImplementedError(
