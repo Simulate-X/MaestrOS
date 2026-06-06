@@ -250,6 +250,24 @@ def _validate_and_build_decision(
             )
             target_agent_id = worker.id
 
+        # Provider kontrolü ÖNCE (güvenlik sınırı — model kontrolünden üstün)
+        if new_provider and new_provider.lower() not in {"ollama"}:
+            log.warning(
+                "CEO decision: new_provider=%r is cloud → downgrade to escalate_human",
+                new_provider,
+            )
+            return CeoDecision(
+                action="escalate_human",
+                target_agent_id=None,
+                new_provider=None,
+                new_model=None,
+                reason=(
+                    f"CEO requested cloud provider {new_provider!r} which requires "
+                    f"human approval. Original reason: {reason}"
+                ),
+                raw_json=parsed,
+            )
+
         # Model local roster'da mı?
         if new_model not in available_stronger_models:
             log.warning(
@@ -264,24 +282,6 @@ def _validate_and_build_decision(
                 reason=(
                     f"CEO requested model {new_model!r} but it's not in the "
                     f"available local roster. Original reason: {reason}"
-                ),
-                raw_json=parsed,
-            )
-
-        # Provider kontrolü (sadece ollama v1)
-        if new_provider and new_provider.lower() not in {"ollama"}:
-            log.warning(
-                "CEO decision: new_provider=%r is cloud → downgrade to escalate_human",
-                new_provider,
-            )
-            return CeoDecision(
-                action="escalate_human",
-                target_agent_id=None,
-                new_provider=None,
-                new_model=None,
-                reason=(
-                    f"CEO requested cloud provider {new_provider!r} which requires "
-                    f"human approval. Original reason: {reason}"
                 ),
                 raw_json=parsed,
             )
