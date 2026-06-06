@@ -11,6 +11,7 @@ from app.models import Agent
 from app.services.wake import run_wake
 from app.services.audit import emit_audit
 from app.services import budget
+from app.services.agents import swap_worker_model, NeedsHumanApproval
 
 log = logging.getLogger("api.agents")
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -192,3 +193,50 @@ async def update_agent(agent_id: int, data: AgentUpdate):
 @router.post("/{agent_id}/wake")
 async def wake(agent_id: int):
     return await run_wake(agent_id)
+
+
+# ── Swap model ────────────────────────────────────────────────────────────────
+
+class SwapModelRequest(BaseModel):
+    new_provider: str
+    new_model: str
+    reason: Optional[str] = None
+
+
+class SwapModelResponse(BaseModel):
+    agent_id: int
+    old_provider: str
+    old_model: str
+    new_provider: str
+    new_model: str
+
+
+@router.post("/{agent_id}/swap-model", response_model=SwapModelResponse)
+async def swap_model(agent_id: int, data: SwapModelRequest):
+    """
+    Human-initiated model swap. Herhangi bir kayıtlı provider hedeflenebilir.
+    CEO-initiated swap için handle_max_reworks_block → services/agents.py kullanılır.
+    """
+    async with SessionMaker() as s:
+        async with s.begin():
+            try:
+                result = await swap_worker_model(
+                    s,
+                    agent_id=agent_id,
+                    new_provider=data.new_provider,
+                    new_model=data.new_model,
+                    initiated_by="human",
+                    reason=data.reason,
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+            except NeedsHumanApproval as e:
+                raise HTTPException(status_code=403, detail=str(e))
+
+    return SwapModelResponse(
+        agent_id=agent_id,
+        old_provider=result.old_provider,
+        old_model=result.old_model,
+        new_provider=data.new_provider,
+        new_model=data.new_model,
+    )

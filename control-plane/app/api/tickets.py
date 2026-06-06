@@ -8,6 +8,7 @@ from sqlalchemy import select, update
 from app.db import SessionMaker
 from app.models import Ticket
 from app.services.audit import emit_audit
+from app.services.orchestrator import handle_max_reworks_block
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
 
@@ -46,6 +47,8 @@ class TicketRead(BaseModel):
     parent_ticket_id: Optional[int]
     phase_visit_count: dict
     blocked_reason: Optional[str]
+    # Faz 5: CEO swap sayacı
+    ceo_swaps_used: int = 0
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -148,3 +151,40 @@ async def reject_ticket(ticket_id: int, reason: str = ""):
             )
 
     return {"status": "rejected", "ticket_id": ticket_id, "reason": reason}
+
+
+@router.post("/{ticket_id}/ceo-adjudicate")
+async def ceo_adjudicate(ticket_id: int):
+    """
+    Manuel CEO adjudication trigger.
+
+    Blocked (max_reworks) bir ticket üzerinde CEO'yu devreye alır.
+    CEO kararı (swap / escalate / replan) uygulanır.
+
+    Test akışı: önce bu endpoint ile CEO'yu izle, ardından CEO_AUTONOMOUS_SWAP=true yap.
+    """
+    async with SessionMaker() as s:
+        async with s.begin():
+            ticket = await s.get(Ticket, ticket_id)
+            if ticket is None:
+                raise HTTPException(404, "ticket not found")
+            if ticket.status not in ("blocked", "done"):
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        f"ticket status is {ticket.status!r}; "
+                        "ceo-adjudicate only applies to blocked or done tickets"
+                    ),
+                )
+
+            await handle_max_reworks_block(s, ticket_id=ticket_id)
+
+            # Güncel durumu döndür
+            await s.refresh(ticket)
+
+    return {
+        "ticket_id": ticket_id,
+        "new_status": ticket.status,
+        "blocked_reason": ticket.blocked_reason,
+        "ceo_swaps_used": ticket.ceo_swaps_used,
+    }

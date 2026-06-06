@@ -102,6 +102,17 @@
 - loading / error / empty — her durumda form kullanılabilir kalır
 - Ollama + cloud provider aynı bileşeni paylaşır
 
+### ✅ Faz 5 / C — Claude Code (CLI) Adapter (4 Haziran)
+- `app/adapters/claude_code.py` — subprocess adapter (asyncio, json; sıfır yeni kütüphane)
+  - `@register_provider("claude_code")` → registry'e eklendi
+  - `create_subprocess_exec` (shell=False, injection yok)
+  - 180s timeout + proc.kill() — scheduler asla takılmaz
+  - `--allowedTools ""` — interaktif onay prompt'u engellendi
+  - `FileNotFoundError` → açık hata, crash yok
+- `app/adapters/__init__.py` → side-effect import eklendi
+- `frontend/src/lib/types.ts` → `Provider` tipine `claude_code` eklendi
+- `AgentEditModal.tsx` → provider Segmented'a "claude code" butonu + "abonelik" hint
+
 ---
 
 ## Mevcut Durum

@@ -153,6 +153,10 @@ class Ticket(Base):
         JSONB, nullable=False, default=dict, server_default=sa.text("'{}'::jsonb")
     )
     blocked_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Faz 5: CEO autonomous swap sayacı (bounded autonomy — max 1 CEO swap per ticket)
+    ceo_swaps_used: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
 
 
 class Run(Base):

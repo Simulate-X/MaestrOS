@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: SecretStr | None = None   # null → adapter çağrısı reddedilir
     OPENROUTER_API_KEY: SecretStr | None = None
 
+    # Faz 5: CEO autonomous model swap feature flag
+    # False (default) → max_reworks aşıldığında mevcut davranış (insan bloğu) korunur
+    # True → CEO önce adjudicate eder, başarısızlık sonrası insana iletir
+    CEO_AUTONOMOUS_SWAP: bool = False
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

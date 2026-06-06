@@ -127,11 +127,18 @@ async def on_run_complete(
     visit_count: dict = dict(ticket.phase_visit_count or {})
     next_visit = visit_count.get(target_phase.name, 0) + 1
     if target_phase.max_reworks is not None and next_visit > target_phase.max_reworks:
-        await _block_ticket(
-            session,
-            ticket,
-            f"max_reworks ({target_phase.max_reworks}) exceeded for {target_phase.name}",
-        )
+        from app.config import settings
+        if settings.CEO_AUTONOMOUS_SWAP:
+            # CEO önce adjudicate etsin — swap başarılıysa re-queue, aksi halde insan bloğu
+            from app.services.orchestrator import handle_max_reworks_block
+            await handle_max_reworks_block(session, ticket_id=ticket.id)
+        else:
+            # Mevcut davranış: direkt insan bloğu
+            await _block_ticket(
+                session,
+                ticket,
+                f"max_reworks ({target_phase.max_reworks}) exceeded for {target_phase.name}",
+            )
         return None
 
     # ── 4) BODY COMPOSITION ──────────────────────────────────────────────────
