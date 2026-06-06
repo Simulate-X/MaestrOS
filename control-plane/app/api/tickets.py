@@ -188,3 +188,52 @@ async def ceo_adjudicate(ticket_id: int):
         "blocked_reason": ticket.blocked_reason,
         "ceo_swaps_used": ticket.ceo_swaps_used,
     }
+
+@router.post("/{ticket_id}/ceo-dry-run-test")
+async def ceo_dry_run_test(ticket_id: int):
+    """
+    Babanın bahsettiği Panzehir Testi (Dry-Run):
+    Hiçbir veriyi güncellemez (commit/swap yapmaz), sadece gerçek şemayı,
+    list_models çağrısını ve CEO beynini canlı ticket verisine karşı doğrular.
+    """
+    # 🧠 CEO servis fonksiyonunu dosyanın üstünde ya da burada içe aktarabilirsin
+    from app.services.ceo import ceo_adjudicate_blocked_ticket
+
+    async with SessionMaker() as s:
+        # 1. Biletin varlığını doğrula (Şema okuma testi)
+        ticket = await s.get(Ticket, ticket_id)
+        if ticket is None:
+            raise HTTPException(404, "ticket not found")
+            
+        # Bilet durumunun test için uygun olup olmadığını kontrol et
+        if ticket.status not in ("blocked", "done"):
+            raise HTTPException(
+                status_code=409,
+                detail=f"ticket durumu {ticket.status!r}; dry-run sadece blocked veya done biletlerde çalışır."
+            )
+
+        try:
+            # 2. 🚀 BEYNİ GERÇEK VERİTABANI SESSION'I VE CANLI TICKET İLE TETİKLE
+            # s.begin() açmıyoruz çünkü veritabanına hiçbir şey YAZMAYACAĞIZ (Read-Only).
+            decision = await ceo_adjudicate_blocked_ticket(s, ticket_id=ticket_id)
+            
+            # 3. Temiz bir CeoDecision döndüyse her şey yolunda demektir
+            return {
+                "status": "success",
+                "message": "Babanın kontrol listesi başarıyla geçildi! Şema ve adaptörler uyumlu.",
+                "ceo_decision": decision
+            }
+            
+        except AttributeError as ae:
+            # ❌ 1. Risk: Şemada bir alan ismi (phase_visit_count, assignee_agent_id vb.) yanlış!
+            raise HTTPException(
+                status_code=500,
+                detail=f"ŞEMA HATASI: Babanın uyardığı alan adı uyuşmazlığı çıktı! AttributeError: {str(ae)}"
+            )
+            
+        except Exception as e:
+            # ❌ 2. Risk: adapter_cls.list_models() classmethod değilse veya RunPacket alanları uyumsuzsa
+            raise HTTPException(
+                status_code=500,
+                detail=f"ADAPTER / CONFIG HATASI: list_models veya RunPacket yapısı patladı! Hata: {repr(e)}"
+            )
