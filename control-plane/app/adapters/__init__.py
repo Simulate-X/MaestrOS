@@ -7,6 +7,7 @@ from app.adapters.base import ProviderAdapter, RunPacket, RunResult, ADAPTER_REG
 from app.adapters.ollama import OllamaAdapter        # noqa: F401
 from app.adapters.anthropic import AnthropicAdapter  # noqa: F401
 from app.adapters.openrouter import OpenRouterAdapter  # noqa: F401
+from app.adapters.claude_code import ClaudeCodeAdapter  # noqa: F401  # registers adapter
 
 
 def build_adapter(agent) -> ProviderAdapter:

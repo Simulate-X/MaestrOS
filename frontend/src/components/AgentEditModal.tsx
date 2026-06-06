@@ -209,10 +209,10 @@ export default function AgentEditModal({ agent, companyId, onSave, onClose }: {
               </div>
               <AMField label={t("agentModal.provider")}>
                 <Segmented value={provider} onChange={changeProvider} options={[
-                  { value: "ollama", label: "ollama" }, { value: "anthropic", label: "anthropic" }, { value: "openrouter", label: "openrouter" },
+                  { value: "ollama", label: "ollama" }, { value: "anthropic", label: "anthropic" }, { value: "openrouter", label: "openrouter" }, { value: "claude_code", label: "Claude CLI" },
                 ]} />
               </AMField>
-              <AMField label={t("agentModal.model")} hint={provider === "ollama" ? t("agentModal.localModel") : t("agentModal.cloud")}>
+              <AMField label={t("agentModal.model")} hint={provider === "ollama" ? t("agentModal.localModel") : provider === "claude_code" ? "abonelik" : t("agentModal.cloud")}>
                 {modelsError && (
                   <div className="font-mono" style={{ color: "#ffaa00", fontSize: 11, marginBottom: 6 }}>
                     ⚠ Model listesi alınamadı — adını elle yaz

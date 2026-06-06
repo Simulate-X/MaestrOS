@@ -22,3 +22,11 @@ include = ["app*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+filterwarnings = [
+    # pytest-asyncio 1.4.0 + Python 3.10: the internal backports runner creates
+    # an AsyncMock._execute_mock_call coroutine that is GC'd without being awaited.
+    # The warning is emitted by CPython's _PyGen_Finalize (C level) via
+    # warnings.warn(RuntimeWarning(...)), NOT via sys.unraisablehook, so a
+    # module-scoped filter doesn't work. Message-scoped filter is precise enough.
+    "ignore:coroutine 'AsyncMockMixin._execute_mock_call' was never awaited:RuntimeWarning",
+]

@@ -4,7 +4,7 @@
 export type TicketStatus = "queued" | "running" | "done" | "error" | "needs_approval" | "blocked";
 export type AgentStatus = "active" | "paused" | "terminated";
 export type BudgetPeriod = "daily" | "monthly" | "all_time";
-export type Provider = "ollama" | "anthropic" | "openrouter";
+export type Provider = "ollama" | "anthropic" | "openrouter" | "claude_code";
 export type Gate = "auto" | "human_approval";
 export type RunStatus = "done" | "needs_approval" | "blocked" | "error";
 
