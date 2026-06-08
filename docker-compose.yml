@@ -57,6 +57,7 @@ services:
     build: ./control-plane
     command: ["python", "-m", "app.scheduler.main"]
     env_file: .env
+    profiles: [scheduler]
     depends_on:
       db:
         condition: service_healthy

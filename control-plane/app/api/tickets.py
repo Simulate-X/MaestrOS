@@ -192,7 +192,7 @@ async def ceo_adjudicate(ticket_id: int):
 @router.post("/{ticket_id}/ceo-dry-run-test")
 async def ceo_dry_run_test(ticket_id: int):
     """
-    Babanın bahsettiği Panzehir Testi (Dry-Run):
+    *** SUDE Panzehir Testi (Dry-Run) ***
     Hiçbir veriyi güncellemez (commit/swap yapmaz), sadece gerçek şemayı,
     list_models çağrısını ve CEO beynini canlı ticket verisine karşı doğrular.
     """
@@ -220,7 +220,7 @@ async def ceo_dry_run_test(ticket_id: int):
             # 3. Temiz bir CeoDecision döndüyse her şey yolunda demektir
             return {
                 "status": "success",
-                "message": "Babanın kontrol listesi başarıyla geçildi! Şema ve adaptörler uyumlu.",
+                "message": "*** SUDE Panzehir Testi *** Kontrol listesi başarıyla geçildi! Şema ve adaptörler uyumlu.",
                 "ceo_decision": decision
             }
             
